@@ -84,6 +84,17 @@ export const Chatbot = () => {
       return;
     }
 
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "YOUR_GEMINI_API_KEY" || process.env.GEMINI_API_KEY === "") {
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: "I'm currently running in offline demo mode because the GEMINI_API_KEY hasn't been configured on Vercel yet. However, you can still click the suggested options or book directly!" 
+        }]);
+        setIsLoading(false);
+      }, 500);
+      return;
+    }
+
     try {
       const chatHistory = messages.filter(m => m.type !== 'form').map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
