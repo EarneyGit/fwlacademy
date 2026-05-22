@@ -146,7 +146,7 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                   <div className="pt-4">
                     <button className="w-full py-6 bg-brand-copper text-white font-black text-xl rounded-2xl glow-copper hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 group">
-                      PAY ₹1,999 NOW
+                      PAY ₹4,999 NOW
                       <Zap className="w-5 h-5 fill-current group-hover:animate-bounce" />
                     </button>
                     <p className="text-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold mt-6">
@@ -186,11 +186,11 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/40">Early Bird Discount</span>
-                      <span className="text-green-500">-₹13,000</span>
+                      <span className="text-green-500">-₹10,000</span>
                     </div>
                     <div className="flex justify-between text-xl font-bold pt-4 border-t border-white/10">
                       <span>Total</span>
-                      <span className="text-brand-copper-glow">₹1,999</span>
+                      <span className="text-brand-copper-glow">₹4,999</span>
                     </div>
                   </div>
                </div>
@@ -327,7 +327,7 @@ const Navbar = ({ onJoin }: { onJoin: () => void }) => (
         <img 
           src={logoWhite} 
           alt="Futurewave Labs" 
-          className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
+          className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
         />
       </a>
       
@@ -456,7 +456,7 @@ const Hero = ({ onJoin }: { onJoin: () => void }) => {
             className="group relative w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-brand-copper rounded-xl sm:rounded-2xl text-white font-bold text-base sm:text-lg glow-copper overflow-hidden block"
           >
             <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 slant" />
-            Claim Your Seat – ₹1999
+            Claim Your Seat – ₹4999
           </motion.button>
           <div className="flex items-center gap-3 text-white/40">
             <div className="flex -space-x-2 sm:-space-x-3">
@@ -918,7 +918,7 @@ const Monetization = () => {
                      className="text-3xl sm:text-4xl md:text-6xl font-display font-bold text-white mb-6 sm:mb-8 leading-tight"
                    >
                       How to make your <br/>
-                      <span className="text-brand-copper">₹1999 back in 48 hours.</span>
+                      <span className="text-brand-copper">₹4999 back in 48 hours.</span>
                    </motion.h2>
                    <p className="text-white/50 text-base sm:text-lg mb-8 sm:mb-10 leading-relaxed max-w-xl">
                       Standard agency rates for these cinematic AI videos range from ₹1,500 to ₹5,000+ per video. 
@@ -1089,7 +1089,7 @@ const OfferBreakdown = ({ onJoin }: { onJoin: () => void }) => {
                        <p className="text-white/40 text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-3 sm:mb-4">Total Value: <span className="line-through">₹24,999</span></p>
                        <div className="flex items-center justify-center gap-1 mb-6 sm:mb-8">
                           <span className="text-3xl sm:text-4xl font-display font-bold text-white">₹</span>
-                          <span className="text-5xl sm:text-7xl font-display font-black text-white px-1 sm:px-2">1999</span>
+                          <span className="text-5xl sm:text-7xl font-display font-black text-white px-1 sm:px-2">4999</span>
                        </div>
                        
                        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/5 backdrop-blur-sm">
@@ -1318,7 +1318,7 @@ export default function App() {
                >
                   <span>JOIN THE BATCH</span>
                   <div className="flex items-center gap-2">
-                     <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px]">₹1999</span>
+                     <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px]">₹4999</span>
                      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                </button>

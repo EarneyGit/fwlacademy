@@ -5,7 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM_PROMPT = `You are 'Futurewave Assistant' – a high-conversion sales bot for Futurewave Labs.
 Your CORE MISSION is to move users through this 3-step funnel:
-1. INFORM: Briefly answer questions about the 8-step AI Video Masterclass (Offline, ₹1999).
+1. INFORM: Briefly answer questions about the 8-step AI Video Masterclass (Offline, ₹4999).
 2. CAPTURE: If user shows interest, ask for Name, Email, and Phone.
 3. CONVERT: Direct them to the "Enroll Now" button to pay.
 
@@ -17,7 +17,7 @@ STRICT CONSTRAINTS:
 
 KEY FACTS:
 - Course: 8-Step Offline Masterclass.
-- Investment: ₹1999.
+- Investment: ₹4999.
 - Outcome: Master agency-grade AI video & earn ₹2k-₹5k per clip.
 - Tools: We use cloud-based professional tech (Narrative Protocol, Motion Architecture).
 
@@ -130,7 +130,7 @@ export const Chatbot = () => {
     setShowForm(false);
     setMessages(prev => [...prev, { 
       role: 'assistant', 
-      content: `Got it, ${leadData.name.split(' ')[0]}! Your reservation is pending. Click the button below to pay ₹1999 and finalize your seat before the 20 slots are gone!` 
+      content: `Got it, ${leadData.name.split(' ')[0]}! Your reservation is pending. Click the button below to pay ₹4999 and finalize your seat before the 20 slots are gone!` 
     }]);
   };
 
@@ -146,7 +146,7 @@ export const Chatbot = () => {
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-24 md:bottom-6 right-6 z-[60] w-14 h-14 bg-brand-copper rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(217,119,6,0.5)] group ${isOpen ? 'hidden md:flex' : 'flex'}`}
       >
-        {isOpen ? <X className="text-white w-6 h-6" /> : <MessageCircle className="text-white w-6 h-6" />}
+        {isOpen ? <X className="text-white w-6 h-6" /> : <Sparkles className="text-white w-6 h-6 animate-pulse" />}
         <motion.div 
           animate={{ scale: [1, 1.2, 1] }} 
           transition={{ duration: 2, repeat: Infinity }}
@@ -168,7 +168,7 @@ export const Chatbot = () => {
             <div className="p-4 sm:p-5 bg-brand-copper border-b border-white/5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Bot className="text-white w-5 h-5" />
+                  <Sparkles className="text-white w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-white leading-tight">Futurewave Assistant</h3>
@@ -289,7 +289,7 @@ export const Chatbot = () => {
                 onClick={() => setIsOpen(false)}
                 className="w-full h-12 bg-white text-brand-black rounded-xl flex items-center justify-center gap-2 font-black text-sm hover:scale-[1.02] transition-transform shadow-xl"
               >
-                Enroll Now • ₹1999 
+                Enroll Now • ₹4999 
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
