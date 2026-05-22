@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import logoWhite from "./assets/logo.png";
 import { 
   Play, 
   ChevronRight, 
@@ -322,18 +323,12 @@ const InteractiveCard = ({ children, className }: { children: React.ReactNode, c
 const Navbar = ({ onJoin }: { onJoin: () => void }) => (
   <nav className="fixed top-0 left-0 right-0 z-[100] bg-brand-black/60 backdrop-blur-xl border-b border-white/5">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-2">
-      <a href="#" className="flex items-center gap-2 group shrink-0">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-copper rounded-lg flex items-center justify-center glow-copper relative overflow-hidden">
-          <motion.div 
-            animate={{ x: ["-100%", "100%"] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 bg-white/20 skew-x-12" 
-          />
-          <Play className="text-white fill-white w-4 h-4 sm:w-5 sm:h-5 ml-0.5 relative z-10" />
-        </div>
-        <span className="font-display font-bold text-base sm:text-xl tracking-tight">
-          FUTUREWAVE <span className="text-brand-copper">LABS</span>
-        </span>
+      <a href="#" className="flex items-center group shrink-0">
+        <img 
+          src={logoWhite} 
+          alt="Futurewave Labs" 
+          className="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
+        />
       </a>
       
       <div className="hidden lg:flex items-center gap-10 text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
@@ -1215,13 +1210,12 @@ const Footer = () => (
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-copper/30 to-transparent" />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12 sm:gap-16 relative z-10">
          <div className="max-w-xs space-y-6">
-            <div className="flex items-center gap-2">
-               <div className="w-10 h-10 bg-brand-copper rounded-xl flex items-center justify-center glow-copper shadow-lg">
-                  <Play className="text-white fill-white w-5 h-5 ml-0.5" />
-               </div>
-               <span className="font-display font-bold text-2xl tracking-tight uppercase">
-                 Futurewave <span className="text-brand-copper">Labs</span>
-               </span>
+            <div className="flex items-center">
+                <img 
+                  src={logoWhite} 
+                  alt="Futurewave Labs" 
+                  className="h-10 sm:h-12 w-auto object-contain" 
+                />
             </div>
             <p className="text-white/30 text-sm leading-relaxed">
               We empower creators to bypass the limitations of traditional production using systematic AI cinematic workflows.
