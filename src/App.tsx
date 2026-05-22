@@ -327,7 +327,7 @@ const Navbar = ({ onJoin }: { onJoin: () => void }) => (
         <img 
           src={logoWhite} 
           alt="Futurewave Labs" 
-          className="h-8 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
+          className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
         />
       </a>
       
