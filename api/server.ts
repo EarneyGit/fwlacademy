@@ -267,4 +267,11 @@ app.post('/api/upload', checkAuth, upload.single('file'), async (req: any, res: 
   }
 });
 
+if (!process.env.VERCEL) {
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
 export default app;
