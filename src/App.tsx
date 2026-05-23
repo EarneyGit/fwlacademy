@@ -31,11 +31,20 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { Chatbot } from "./components/Chatbot";
+import { AdminDashboard } from "./components/AdminDashboard";
 
 // --- Components ---
 
-const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const PaymentPage: React.FC<{ 
+  onBack: () => void;
+  config: any;
+  onSuccess: (paymentId: string) => void;
+}> = ({ onBack, config, onSuccess }) => {
   const [timer, setTimer] = useState(600); // 10 minutes
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,6 +52,111 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !phone) {
+      alert('Please fill out Name, Email, and Phone fields.');
+      return;
+    }
+    
+    setIsProcessing(true);
+    try {
+      const orderResponse = await fetch('/api/payment/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone })
+      });
+
+      if (!orderResponse.ok) {
+        alert('Failed to initialize order with server. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+
+      const orderData = await orderResponse.json();
+
+      if (orderData.isMock) {
+        const confirmMock = window.confirm(
+          `Razorpay key secret not configured on Vercel backend.\nPerform MOCK payment transaction of ₹${orderData.amount}?`
+        );
+        if (confirmMock) {
+          const verifyResponse = await fetch('/api/payment/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: orderData.orderId,
+              isMock: true
+            })
+          });
+
+          if (verifyResponse.ok) {
+            onSuccess('MOCK_PAYMENT_SUCCESS_' + Math.random().toString(36).substring(2, 9));
+          } else {
+            alert('Mock signature verification failed.');
+          }
+        }
+        setIsProcessing(false);
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount * 100,
+        currency: orderData.currency,
+        name: 'Futurewave Labs',
+        description: 'AI Video Masterclass Enrollment',
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            const verifyResponse = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            if (verifyResponse.ok) {
+              onSuccess(response.razorpay_payment_id);
+            } else {
+              alert('Signature verification failed on backend. Contact Support.');
+            }
+          } catch (err) {
+            alert('Signature verification connection error.');
+          }
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        theme: {
+          color: '#D97706'
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert('Network error connecting to payment API.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -57,7 +171,6 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       exit={{ opacity: 0 }}
       className="min-h-screen bg-brand-black text-white relative flex flex-col pt-20"
     >
-      {/* Top Close Button */}
       <button 
         onClick={onBack}
         className="fixed top-8 right-8 z-50 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all group active:scale-95"
@@ -66,7 +179,6 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </button>
 
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex-1">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 sm:gap-8 mb-8 sm:mb-12">
           <div className="space-y-3 sm:space-y-4 w-full">
             <button 
@@ -92,14 +204,13 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8 sm:gap-12 items-start mb-20">
-          {/* Form Side */}
           <div className="lg:col-span-3 space-y-6 sm:space-y-8">
             <div className="glass-card p-6 sm:p-8 md:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border-white/10 relative overflow-hidden">
                <div className="absolute top-0 right-0 p-6">
                  <ShieldCheck className="w-6 h-6 text-brand-copper" />
                </div>
                
-               <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+               <form className="space-y-6" onSubmit={handlePaymentSubmit}>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-white/40 uppercase tracking-widest pl-1">Full Name</label>
@@ -107,6 +218,8 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         type="text" 
                         required
                         placeholder="John Doe"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         className="w-full bg-brand-black/50 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-brand-copper focus:ring-1 focus:ring-brand-copper/30 transition-all"
                       />
                     </div>
@@ -116,41 +229,44 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         type="email" 
                         required
                         placeholder="john@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-brand-black/50 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-brand-copper focus:ring-1 focus:ring-brand-copper/30 transition-all"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest pl-1">Payment Method</label>
-                    <div className="grid grid-cols-2 gap-4">
-                       <button className="flex items-center justify-center gap-3 p-4 bg-white/10 border-2 border-brand-copper rounded-2xl font-bold">
-                         <div className="w-4 h-4 rounded-full border-4 border-brand-copper" />
-                         UPI / GPay
-                       </button>
-                       <button className="flex items-center justify-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl font-bold opacity-50 cursor-not-allowed">
-                         <CreditCard className="w-5 h-5" />
-                         Card Pay
-                       </button>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-widest pl-1">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        required
+                        placeholder="+91 98765 43210"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-brand-black/50 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-brand-copper focus:ring-1 focus:ring-brand-copper/30 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-widest pl-1">Payment Provider</label>
+                      <div className="w-full h-[58px] bg-brand-black/50 border border-brand-copper/50 text-brand-copper-glow rounded-2xl flex items-center justify-center font-bold text-sm tracking-widest uppercase">
+                        Razorpay Standard
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest pl-1">UPI ID</label>
-                    <input 
-                      type="text" 
-                      placeholder="username@okaxis"
-                      className="w-full bg-brand-black/50 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-brand-copper transition-all font-mono"
-                    />
-                  </div>
-
                   <div className="pt-4">
-                    <button className="w-full py-6 bg-brand-copper text-white font-black text-xl rounded-2xl glow-copper hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 group">
-                      PAY ₹4,999 NOW
+                    <button 
+                      type="submit"
+                      disabled={isProcessing}
+                      className="w-full py-6 bg-brand-copper text-white font-black text-xl rounded-2xl glow-copper hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-4 group"
+                    >
+                      {isProcessing ? 'PROMPT LOADING...' : `PAY ₹${config.price_current.toLocaleString()} NOW`}
                       <Zap className="w-5 h-5 fill-current group-hover:animate-bounce" />
                     </button>
                     <p className="text-center text-[9px] text-white/20 uppercase tracking-[0.3em] font-bold mt-6">
-                      POWERED BY SECURE STRIPE GATEWAY & 256-BIT SSL
+                      SECURED & VERIFIED VIA RAZORPAY COMPLIANCE
                     </p>
                   </div>
                </form>
@@ -163,7 +279,6 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Summary Side */}
           <div className="lg:col-span-2 space-y-6">
             <div className="glass-card p-8 rounded-[2.5rem] border-brand-copper/30 bg-brand-copper/[0.02] space-y-8">
                <div className="text-[10px] font-black text-brand-copper uppercase tracking-widest">Order Summary</div>
@@ -182,15 +297,15 @@ const PaymentPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="space-y-4 pt-6 border-t border-white/5">
                     <div className="flex justify-between text-sm">
                       <span className="text-white/40">Course Value</span>
-                      <span className="text-white/60 line-through">₹14,999</span>
+                      <span className="text-white/60 line-through">₹{config.price_original.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/40">Early Bird Discount</span>
-                      <span className="text-green-500">-₹10,000</span>
+                      <span className="text-green-500">-₹{config.discount_amount.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xl font-bold pt-4 border-t border-white/10">
                       <span>Total</span>
-                      <span className="text-brand-copper-glow">₹4,999</span>
+                      <span className="text-brand-copper-glow">₹{config.price_current.toLocaleString()}</span>
                     </div>
                   </div>
                </div>
@@ -320,12 +435,12 @@ const InteractiveCard = ({ children, className }: { children: React.ReactNode, c
   );
 };
 
-const Navbar = ({ onJoin }: { onJoin: () => void }) => (
+const Navbar = ({ onJoin, logoUrl }: { onJoin: () => void; logoUrl?: string }) => (
   <nav className="fixed top-0 left-0 right-0 z-[100] bg-brand-black/60 backdrop-blur-xl border-b border-white/5">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-2">
       <a href="#" className="flex items-center group shrink-0">
         <img 
-          src={logoWhite} 
+          src={logoUrl || logoWhite} 
           alt="Futurewave Labs" 
           className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03]" 
         />
@@ -355,16 +470,9 @@ const Navbar = ({ onJoin }: { onJoin: () => void }) => (
   </nav>
 );
 
-const Hero = ({ onJoin }: { onJoin: () => void }) => {
-  const [filled, setFilled] = useState(14);
-  const total = 20;
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFilled(prev => prev < 20 ? prev + (Math.random() > 0.95 ? 1 : 0) : prev);
-    }, 12000);
-    return () => clearInterval(interval);
-  }, []);
+const Hero = ({ onJoin, config }: { onJoin: () => void; config: any }) => {
+  const filled = config.seats_total - config.seats_remaining;
+  const total = config.seats_total;
 
   return (
     <header className="relative pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
@@ -386,17 +494,9 @@ const Hero = ({ onJoin }: { onJoin: () => void }) => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-3xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-6 sm:mb-8 tracking-tight leading-[1.2] sm:leading-[1.1]"
+          className="text-3xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-6 sm:mb-8 tracking-tight leading-[1.2] sm:leading-[1.1] max-w-4xl mx-auto"
         >
-          Master the AI Video <br/>
-          <motion.span 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 1 }}
-            className="text-transparent bg-clip-text bg-gradient-to-r from-brand-copper via-brand-copper-glow to-brand-copper px-1"
-          >
-            Production Protocol
-          </motion.span>
+          {config.hero_title}
         </motion.h1>
 
         <motion.p 
@@ -405,8 +505,7 @@ const Hero = ({ onJoin }: { onJoin: () => void }) => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-white/50 mb-8 font-light leading-relaxed font-sans px-4 sm:px-0"
         >
-          Mastering the high-fidelity pipeline used for 200+ global brands to create "AI video that doesn't look like AI." 
-          Batch Size: Strictly Limited to 20 Seats for agency-grade results.
+          {config.hero_subtitle}
         </motion.p>
 
         {/* Dynamic Seat Progress Bar */}
@@ -456,7 +555,7 @@ const Hero = ({ onJoin }: { onJoin: () => void }) => {
             className="group relative w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-brand-copper rounded-xl sm:rounded-2xl text-white font-bold text-base sm:text-lg glow-copper overflow-hidden block"
           >
             <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 slant" />
-            Claim Your Seat – ₹4999
+            Claim Your Seat – ₹{config.price_current.toLocaleString()}
           </motion.button>
           <div className="flex items-center gap-3 text-white/40">
             <div className="flex -space-x-2 sm:-space-x-3">
@@ -473,7 +572,7 @@ const Hero = ({ onJoin }: { onJoin: () => void }) => {
               ))}
             </div>
             <div className="flex flex-col items-start translate-y-0.5">
-               <span className="text-xs sm:text-sm font-medium">Joined by 180+ founders</span>
+               <span className="text-xs sm:text-sm font-medium">Joined by {total * 9}+ founders</span>
                <div className="flex items-center gap-1">
                   <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-[8px] sm:text-[10px] text-white/20 font-bold uppercase tracking-widest">5 people browsing</span>
@@ -1014,15 +1113,8 @@ const Monetization = () => {
   );
 };
 
-const OfferBreakdown = ({ onJoin }: { onJoin: () => void }) => {
-  const [seatsRemaining, setSeatsRemaining] = useState(7);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSeatsRemaining(prev => prev > 1 ? prev - (Math.random() > 0.9 ? 1 : 0) : prev);
-    }, 15000);
-    return () => clearInterval(interval);
-  }, []);
+const OfferBreakdown = ({ onJoin, config }: { onJoin: () => void; config: any }) => {
+  const seatsRemaining = config.seats_remaining;
 
   return (
     <section id="offer" className="py-20 sm:py-32 px-4 sm:px-6 relative overflow-hidden">
@@ -1086,14 +1178,14 @@ const OfferBreakdown = ({ onJoin }: { onJoin: () => void }) => {
                         Best Value
                      </motion.div>
                      <div className="relative z-10">
-                       <p className="text-white/40 text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-3 sm:mb-4">Total Value: <span className="line-through">₹24,999</span></p>
+                       <p className="text-white/40 text-[10px] sm:text-sm font-bold uppercase tracking-widest mb-3 sm:mb-4">Total Value: <span className="line-through">₹{config.price_original.toLocaleString()}</span></p>
                        <div className="flex items-center justify-center gap-1 mb-6 sm:mb-8">
                           <span className="text-3xl sm:text-4xl font-display font-bold text-white">₹</span>
-                          <span className="text-5xl sm:text-7xl font-display font-black text-white px-1 sm:px-2">4999</span>
+                          <span className="text-5xl sm:text-7xl font-display font-black text-white px-1 sm:px-2">{config.price_current.toLocaleString()}</span>
                        </div>
                        
                        <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-white/5 rounded-xl sm:rounded-2xl border border-white/5 backdrop-blur-sm">
-                          <p className="text-brand-copper-glow text-lg sm:text-xl font-display font-bold mb-0.5 sm:mb-1">{seatsRemaining}/20</p>
+                          <p className="text-brand-copper-glow text-lg sm:text-xl font-display font-bold mb-0.5 sm:mb-1">{seatsRemaining}/{config.seats_total}</p>
                           <p className="text-white/40 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">Seats Remaining</p>
                        </div>
                      </div>
@@ -1205,14 +1297,14 @@ const FAQ = () => {
   );
 };
 
-const Footer = () => (
+const Footer = ({ logoUrl }: { logoUrl?: string }) => (
    <footer className="py-16 sm:py-32 px-4 sm:px-6 border-t border-white/5 bg-brand-black relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-copper/30 to-transparent" />
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12 sm:gap-16 relative z-10">
          <div className="max-w-xs space-y-6">
             <div className="flex items-center">
                 <img 
-                  src={logoWhite} 
+                  src={logoUrl || logoWhite} 
                   alt="Futurewave Labs" 
                   className="h-10 sm:h-12 w-auto object-contain" 
                 />
@@ -1274,13 +1366,70 @@ const Footer = () => (
 );
 
 export default function App() {
+  const [isAdmin, setIsAdmin] = useState(window.location.pathname === "/admin");
   const [isCheckout, setIsCheckout] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [txRef, setTxRef] = useState('');
+
+  const [config, setConfig] = useState({
+    hero_title: 'Master Agency-Grade Cinematic AI Video.',
+    hero_subtitle: 'Bypass traditional production constraints. Build cinematic, studio-quality AI campaigns using our systematic 8-step production pipeline.',
+    price_current: 4999,
+    price_original: 14999,
+    discount_amount: 10000,
+    seats_total: 20,
+    seats_remaining: 6,
+    logo_url: '',
+    favicon_url: '/logo.png'
+  });
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('/api/config');
+      if (response.ok) {
+        const data = await response.json();
+        setConfig(data);
+
+        // Dynamically update site favicon if it has changed
+        if (data.favicon_url) {
+          let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = data.favicon_url;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching site configuration:', err);
+    }
+  };
 
   useEffect(() => {
-    if (isCheckout) {
+    fetchConfig();
+  }, []);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setIsAdmin(window.location.pathname === "/admin");
+    };
+    window.addEventListener("popstate", handleLocationChange);
+    return () => window.removeEventListener("popstate", handleLocationChange);
+  }, []);
+
+  useEffect(() => {
+    if (isCheckout || paymentSuccess) {
       window.scrollTo(0, 0);
     }
-  }, [isCheckout]);
+  }, [isCheckout, paymentSuccess]);
+
+  const handlePaymentSuccess = (paymentId: string) => {
+    setTxRef(paymentId);
+    setPaymentSuccess(true);
+    setIsCheckout(false);
+    fetchConfig(); // reload remaining seats
+  };
 
   return (
     <div className="bg-brand-black min-h-screen text-slate-200 selection:bg-brand-copper selection:text-white relative">
@@ -1289,7 +1438,53 @@ export default function App() {
       <div className="grain" />
       
       <AnimatePresence mode="wait">
-        {!isCheckout ? (
+        {isAdmin ? (
+          <AdminDashboard 
+            key="admin" 
+            onBack={() => {
+              window.history.pushState({}, '', '/');
+              setIsAdmin(false);
+            }} 
+          />
+        ) : paymentSuccess ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen flex items-center justify-center p-6 relative z-10"
+          >
+            <div className="glass-card max-w-lg w-full p-8 sm:p-10 rounded-[2.5rem] border-green-500/20 bg-brand-charcoal/50 text-center space-y-6 shadow-2xl relative overflow-hidden" style={{ minHeight: '380px' }}>
+              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center glow-green mx-auto border border-green-500/30">
+                <CheckCircle2 className="text-green-500 w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-display font-black text-white uppercase tracking-wider">SEAT CONFIRMED</h2>
+                <p className="text-white/60 text-sm">Welcome to Futurewave Labs. Your enrollment is verified!</p>
+              </div>
+              
+              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left space-y-2 font-mono text-xs text-white/50">
+                <div className="flex justify-between"><span className="text-white/30">Payment Gateway</span><span>Razorpay Standard</span></div>
+                <div className="flex justify-between"><span className="text-white/30">Transaction Ref</span><span className="text-brand-copper-glow font-bold">{txRef}</span></div>
+                <div className="flex justify-between"><span className="text-white/30">Enrollment Status</span><span className="text-green-400">Processed</span></div>
+              </div>
+
+              <p className="text-white/40 text-xs sm:text-sm italic">
+                We have emailed your masterclass schedule and onboarding guidelines. Please check your inbox (and spam folder) for access links.
+              </p>
+
+              <button
+                onClick={() => {
+                  setPaymentSuccess(false);
+                  setTxRef('');
+                }}
+                className="w-full py-4 bg-brand-copper hover:bg-brand-copper/90 text-white font-bold rounded-xl transition-all glow-copper uppercase tracking-wider text-xs"
+              >
+                Go Back to Site
+              </button>
+            </div>
+          </motion.div>
+        ) : !isCheckout ? (
           <motion.div 
             key="landing"
             initial={{ opacity: 0 }}
@@ -1297,17 +1492,17 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="relative z-10 font-sans"
           >
-            <Navbar onJoin={() => setIsCheckout(true)} />
-            <Hero onJoin={() => setIsCheckout(true)} />
+            <Navbar onJoin={() => setIsCheckout(true)} logoUrl={config.logo_url} />
+            <Hero onJoin={() => setIsCheckout(true)} config={config} />
             <TrustBanner />
             <Agitation />
             <MasterFormats />
             <PipelineReveal />
             <Monetization />
-            <OfferBreakdown onJoin={() => setIsCheckout(true)} />
+            <OfferBreakdown onJoin={() => setIsCheckout(true)} config={config} />
             <SyllabusDownload />
             <FAQ />
-            <Footer />
+            <Footer logoUrl={config.logo_url} />
             <Chatbot />
 
             {/* Floating CTA for Mobile Scarcity */}
@@ -1318,14 +1513,14 @@ export default function App() {
                >
                   <span>JOIN THE BATCH</span>
                   <div className="flex items-center gap-2">
-                     <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px]">₹4999</span>
+                     <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] sm:text-[10px]">₹{config.price_current.toLocaleString()}</span>
                      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                </button>
             </div>
           </motion.div>
         ) : (
-          <PaymentPage key="payment" onBack={() => setIsCheckout(false)} />
+          <PaymentPage key="payment" config={config} onBack={() => setIsCheckout(false)} onSuccess={handlePaymentSuccess} />
         )}
       </AnimatePresence>
     </div>

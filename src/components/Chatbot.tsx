@@ -51,6 +51,25 @@ export const Chatbot = () => {
   const [showForm, setShowForm] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [dynamicPrompt, setDynamicPrompt] = useState('');
+  const [dynamicPrice, setDynamicPrice] = useState(4999);
+
+  useEffect(() => {
+    const fetchChatConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const data = await response.json();
+          setDynamicPrompt(data.chatbot_prompt);
+          setDynamicPrice(data.price_current);
+        }
+      } catch (err) {
+        console.error('Error fetching chatbot config:', err);
+      }
+    };
+    fetchChatConfig();
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -108,7 +127,7 @@ export const Chatbot = () => {
           { role: 'user', parts: [{ text: userMessage }] }
         ],
         config: {
-          systemInstruction: SYSTEM_PROMPT,
+          systemInstruction: dynamicPrompt || SYSTEM_PROMPT,
           temperature: 0.7,
         }
       });
@@ -130,7 +149,7 @@ export const Chatbot = () => {
     setShowForm(false);
     setMessages(prev => [...prev, { 
       role: 'assistant', 
-      content: `Got it, ${leadData.name.split(' ')[0]}! Your reservation is pending. Click the button below to pay ₹4999 and finalize your seat before the 20 slots are gone!` 
+      content: `Got it, ${leadData.name.split(' ')[0]}! Your reservation is pending. Click the button below to pay ₹${dynamicPrice} and finalize your seat before the 20 slots are gone!` 
     }]);
   };
 
@@ -283,16 +302,16 @@ export const Chatbot = () => {
             </div>
 
             {/* Fixed CTA at bottom of chat */}
-            <div className="p-3 bg-brand-copper/10 border-t border-white/5">
-              <a 
-                href="#pricing" 
-                onClick={() => setIsOpen(false)}
-                className="w-full h-12 bg-white text-brand-black rounded-xl flex items-center justify-center gap-2 font-black text-sm hover:scale-[1.02] transition-transform shadow-xl"
-              >
-                Enroll Now • ₹4999 
-                <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
+             <div className="p-3 bg-brand-copper/10 border-t border-white/5">
+               <a 
+                 href="#offer" 
+                 onClick={() => setIsOpen(false)}
+                 className="w-full h-12 bg-white text-brand-black rounded-xl flex items-center justify-center gap-2 font-black text-sm hover:scale-[1.02] transition-transform shadow-xl"
+               >
+                 Enroll Now • ₹{dynamicPrice} 
+                 <ArrowRight className="w-4 h-4" />
+               </a>
+             </div>
 
             {/* Input */}
             <div className="p-4 pb-8 md:pb-4 bg-brand-black border-t border-white/5 shrink-0">
