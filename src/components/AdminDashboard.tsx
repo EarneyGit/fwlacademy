@@ -298,7 +298,7 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <img src={config?.logo_url || '/logo.png'} alt="Logo" className="h-6 w-auto object-contain" />
+            <img src={config?.logo_url || '/logo-white.png'} alt="Logo" className="h-6 w-auto object-contain" />
             <span className="bg-brand-copper/20 text-brand-copper border border-brand-copper/30 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest">
               CMS Dashboard
             </span>
@@ -524,7 +524,7 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                         {uploadingField === 'logo' && <span className="text-[10px] text-brand-copper animate-pulse">Uploading to Cloudinary...</span>}
                       </div>
                       <div className="p-3 bg-white/5 rounded-xl border border-white/5 w-fit">
-                        <img src={config.logo_url || '/logo.png'} alt="Logo preview" className="h-6 w-auto object-contain" />
+                        <img src={config.logo_url || '/logo-white.png'} alt="Logo preview" className="h-6 w-auto object-contain" />
                       </div>
                     </div>
 

@@ -1379,7 +1379,7 @@ export default function App() {
     discount_amount: 10000,
     seats_total: 20,
     seats_remaining: 6,
-    logo_url: '/logo.png',
+    logo_url: '/logo-white.png',
     favicon_url: '/logo.png'
   });
 
