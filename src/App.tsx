@@ -1235,14 +1235,16 @@ const SyllabusDownload = () => (
         <p className="text-white/60 mb-8 sm:mb-10 text-sm sm:text-lg">Get the deep-dive 12-page syllabus including the full technical blueprints and monetization roadmap.</p>
         
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6">
-           <motion.button 
+           <motion.a 
+             href="/Futurewave_Basic_Syllabus_Final.pdf"
+             download="Futurewave_Basic_Syllabus_Final.pdf"
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              className="px-10 py-5 bg-white text-brand-black font-black text-lg rounded-2xl flex items-center gap-3 group-hover:shadow-[0_0_50px_rgba(255,255,255,0.2)] transition-all"
            >
               Download PDF Syllabus
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-           </motion.button>
+           </motion.a>
            <p className="text-white/30 text-sm font-medium">Free instant access • 1.2 MB PDF</p>
         </div>
      </div>
