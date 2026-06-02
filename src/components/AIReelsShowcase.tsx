@@ -72,7 +72,7 @@ export const AIReelsShowcase = () => {
             AI Reel Lab
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white mb-6">
-            15 AI Reels Created <span className="text-brand-copper">With Our Workflow</span>
+            AI Reels Created <span className="text-brand-copper">With Our Workflow</span>
           </h2>
           <p className="text-white/40 text-base sm:text-lg leading-relaxed">
             Explore real short-form videos made using AI tools, prompts, editing systems, and agency-grade production workflows taught inside Futurewave Labs Academy.
@@ -124,15 +124,7 @@ export const AIReelsShowcase = () => {
         <div className="w-4 sm:w-[5vw] shrink-0" /> {/* End Spacer */}
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 mt-8 flex justify-center">
-        <a 
-          href="#signup"
-          className="group inline-flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white text-brand-black font-black text-sm sm:text-base rounded-xl sm:rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-        >
-          Learn How to Create These Reels
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </a>
-      </div>
+
       
       <style>{`
         .hide-scrollbar::-webkit-scrollbar {
