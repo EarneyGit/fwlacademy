@@ -40,6 +40,28 @@ export const AIReelsShowcase = () => {
     fetchReels();
   }, []);
 
+  // Auto-scroll every 2 seconds
+  useEffect(() => {
+    if (reels.length === 0) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, clientWidth, scrollWidth } = scrollRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+        const isAtEnd = scrollLeft >= maxScroll - 10;
+        
+        if (isAtEnd) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Scroll right by approximately one card width
+          scrollRef.current.scrollTo({ left: scrollLeft + 350, behavior: 'smooth' });
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [reels]);
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
