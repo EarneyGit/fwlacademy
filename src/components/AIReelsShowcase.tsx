@@ -43,7 +43,7 @@ export const AIReelsShowcase = () => {
   // Create an artificially infinite array
   const extendedReels = [...reels, ...reels, ...reels, ...reels];
 
-  // Auto-scroll every 2 seconds
+  // Auto-scroll every 3 seconds
   useEffect(() => {
     if (reels.length === 0) return;
 
@@ -74,7 +74,7 @@ export const AIReelsShowcase = () => {
           scrollRef.current.scrollLeft += cardWidth;
         }
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [reels]);
