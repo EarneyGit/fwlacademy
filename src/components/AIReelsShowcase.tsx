@@ -40,21 +40,38 @@ export const AIReelsShowcase = () => {
     fetchReels();
   }, []);
 
+  // Create an artificially infinite array
+  const extendedReels = [...reels, ...reels, ...reels, ...reels];
+
   // Auto-scroll every 2 seconds
   useEffect(() => {
     if (reels.length === 0) return;
 
     const interval = setInterval(() => {
       if (scrollRef.current) {
-        const { scrollLeft, clientWidth, scrollWidth } = scrollRef.current;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
         const maxScroll = scrollWidth - clientWidth;
-        const isAtEnd = scrollLeft >= maxScroll - 10;
+        const cardWidth = 350; // Approx card width + gap
         
-        if (isAtEnd) {
-          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        // If we get near the end of our duplicated sets
+        if (scrollLeft >= maxScroll - cardWidth * 2) {
+          // Calculate the width of exactly ONE original set of reels
+          const singleSetWidth = scrollWidth / 4;
+          
+          // Instantly snap back one full set to maintain illusion
+          scrollRef.current.style.scrollBehavior = 'auto';
+          scrollRef.current.scrollLeft = scrollLeft - singleSetWidth;
+          
+          // Wait for next frame to resume smooth scrolling
+          requestAnimationFrame(() => {
+            if (scrollRef.current) {
+              scrollRef.current.style.scrollBehavior = 'smooth';
+              scrollRef.current.scrollLeft += cardWidth;
+            }
+          });
         } else {
-          // Scroll right by approximately one card width
-          scrollRef.current.scrollTo({ left: scrollLeft + 350, behavior: 'smooth' });
+          scrollRef.current.style.scrollBehavior = 'smooth';
+          scrollRef.current.scrollLeft += cardWidth;
         }
       }
     }, 2000);
@@ -66,10 +83,8 @@ export const AIReelsShowcase = () => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
       const scrollAmount = clientWidth * 0.8;
-      scrollRef.current.scrollTo({
-        left: direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount,
-        behavior: 'smooth'
-      });
+      scrollRef.current.style.scrollBehavior = 'smooth';
+      scrollRef.current.scrollLeft = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
     }
   };
 
@@ -131,13 +146,13 @@ export const AIReelsShowcase = () => {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         <div className="w-2 sm:w-[5vw] shrink-0" /> {/* Spacer */}
-        {reels.map((reel, idx) => (
+        {extendedReels.map((reel, idx) => (
           <motion.div
-            key={reel.id}
+            key={`${reel.id}-${idx}`}
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "0px -50px" }}
-            transition={{ delay: idx * 0.05 }}
+            transition={{ delay: (idx % reels.length) * 0.05 }}
             className="snap-center sm:snap-start shrink-0"
           >
             <ReelCard reel={reel} />
