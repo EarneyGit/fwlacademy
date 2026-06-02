@@ -1209,7 +1209,7 @@ const OfferBreakdown = ({ onJoin, config }: { onJoin: () => void; config: any })
                         <div className="flex flex-col gap-2">
                            <p className="text-white/30 text-[9px] sm:text-[10px] flex items-center justify-center gap-2">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Secure Checkout
+                              WhatsApp Enquiry
                            </p>
                            <div className="hidden sm:flex items-center justify-center gap-1.5">
                               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
@@ -1371,6 +1371,10 @@ const Footer = ({ logoUrl }: { logoUrl?: string }) => (
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(window.location.pathname === "/admin");
   const [isCheckout, setIsCheckout] = useState(false);
+
+  const handleWhatsAppJoin = () => {
+    window.open("https://wa.me/919342393324?text=Hi!%20I'm%20interested%20in%20the%20AI%20Video%20Masterclass.", "_blank");
+  };
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [txRef, setTxRef] = useState('');
 
@@ -1495,15 +1499,15 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="relative z-10 font-sans"
           >
-            <Navbar onJoin={() => setIsCheckout(true)} logoUrl={config.logo_url} />
-            <Hero onJoin={() => setIsCheckout(true)} config={config} />
+            <Navbar onJoin={handleWhatsAppJoin} logoUrl={config.logo_url} />
+            <Hero onJoin={handleWhatsAppJoin} config={config} />
             <TrustBanner />
             <AIReelsShowcase />
             <Agitation />
             <MasterFormats />
             <PipelineReveal />
             <Monetization />
-            <OfferBreakdown onJoin={() => setIsCheckout(true)} config={config} />
+            <OfferBreakdown onJoin={handleWhatsAppJoin} config={config} />
             <SyllabusDownload />
             <FAQ />
             <Footer logoUrl={config.logo_url} />
@@ -1512,7 +1516,7 @@ export default function App() {
             {/* Floating CTA for Mobile Scarcity */}
             <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[90] md:hidden w-full px-4 sm:px-6">
                <button 
-                 onClick={() => setIsCheckout(true)}
+                 onClick={handleWhatsAppJoin}
                  className="w-full flex items-center justify-between px-6 sm:px-8 py-3.5 sm:py-4 bg-brand-copper glow-copper rounded-xl sm:rounded-2xl text-white font-bold text-xs sm:text-sm shadow-2xl"
                >
                   <span>JOIN THE BATCH</span>
