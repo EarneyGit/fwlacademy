@@ -13,6 +13,65 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_gJytQ7VUFAC6@ep-damp-pine-ao5akqgi.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
 });
 
+// Initialize Reels Table
+const initReelsTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reels (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255),
+        platform VARCHAR(50),
+        video_url VARCHAR(255),
+        thumbnail_url VARCHAR(255),
+        badge VARCHAR(100),
+        display_order INTEGER,
+        active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const result = await pool.query('SELECT COUNT(*) FROM reels');
+    if (parseInt(result.rows[0].count) === 0) {
+      const defaultReels = [
+        { badge: 'AI Product Reel', title: 'AI Product Ad Reel' },
+        { badge: 'AI Brand Video', title: 'AI Brand Story Reel' },
+        { badge: 'AI Ad Creative', title: 'AI Ad Creative' },
+        { badge: 'AI Character Reel', title: 'AI Character Reel' },
+        { badge: 'AI Voiceover Reel', title: 'AI Voiceover Reel' },
+        { badge: 'AI Fashion Reel', title: 'AI Fashion Reel' },
+        { badge: 'AI Food Reel', title: 'AI Food Reel' },
+        { badge: 'AI Real Estate Reel', title: 'AI Real Estate Reel' },
+        { badge: 'AI Explainer Reel', title: 'AI Explainer Reel' },
+        { badge: 'AI Social Media Ad', title: 'AI Social Media Ad' },
+        { badge: 'AI Cinematic Reel', title: 'AI Cinematic Reel' },
+        { badge: 'AI UGC Style Reel', title: 'AI UGC Style Reel' },
+        { badge: 'AI Promo Reel', title: 'AI Promo Reel' },
+        { badge: 'AI Course Reel', title: 'AI Course Reel' },
+        { badge: 'AI Business Reel', title: 'AI Business Reel' },
+      ];
+      
+      for (let i = 0; i < defaultReels.length; i++) {
+        await pool.query(
+          `INSERT INTO reels (title, platform, video_url, thumbnail_url, badge, display_order, active)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            defaultReels[i].title, 
+            'vimeo', 
+            'https://vimeo.com/000000000', 
+            '', 
+            defaultReels[i].badge, 
+            i + 1, 
+            true
+          ]
+        );
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing reels table:', error);
+  }
+};
+initReelsTable();
+
 // Configure Cloudinary
 const cloudinaryUrl = process.env.CLOUDINARY_URL || 'cloudinary://166691445291859:1Glzwun9eeUMIoOchWaMvRLbPQ8@dggiggkug';
 const match = cloudinaryUrl.match(/cloudinary:\/\/([^:]+):([^@]+)@(.+)/);
@@ -264,6 +323,69 @@ app.post('/api/upload', checkAuth, upload.single('file'), async (req: any, res: 
   } catch (error: any) {
     console.error('Error uploading to Cloudinary:', error);
     res.status(500).json({ error: 'Upload failed.' });
+  }
+});
+
+// 8. GET /api/reels
+app.get('/api/reels', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM reels ORDER BY display_order ASC');
+    res.json(result.rows);
+  } catch (error: any) {
+    console.error('Error fetching reels:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// 9. POST /api/reels
+app.post('/api/reels', checkAuth, async (req: Request, res: Response) => {
+  const { title, platform, video_url, thumbnail_url, badge, display_order, active } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO reels (title, platform, video_url, thumbnail_url, badge, display_order, active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, platform, video_url, thumbnail_url, badge, display_order, active]
+    );
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error creating reel:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// 10. PATCH /api/reels/:id
+app.patch('/api/reels/:id', checkAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { title, platform, video_url, thumbnail_url, badge, display_order, active } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE reels SET 
+        title = COALESCE($1, title),
+        platform = COALESCE($2, platform),
+        video_url = COALESCE($3, video_url),
+        thumbnail_url = COALESCE($4, thumbnail_url),
+        badge = COALESCE($5, badge),
+        display_order = COALESCE($6, display_order),
+        active = COALESCE($7, active)
+       WHERE id = $8 RETURNING *`,
+      [title, platform, video_url, thumbnail_url, badge, display_order, active, id]
+    );
+    res.json(result.rows[0]);
+  } catch (error: any) {
+    console.error('Error updating reel:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// 11. DELETE /api/reels/:id
+app.delete('/api/reels/:id', checkAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM reels WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting reel:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

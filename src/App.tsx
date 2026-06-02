@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { Chatbot } from "./components/Chatbot";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { AIReelsShowcase } from "./components/AIReelsShowcase";
 
 // --- Components ---
 
@@ -1497,6 +1498,7 @@ export default function App() {
             <Navbar onJoin={() => setIsCheckout(true)} logoUrl={config.logo_url} />
             <Hero onJoin={() => setIsCheckout(true)} config={config} />
             <TrustBanner />
+            <AIReelsShowcase />
             <Agitation />
             <MasterFormats />
             <PipelineReveal />

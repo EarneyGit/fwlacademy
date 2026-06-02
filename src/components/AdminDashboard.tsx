@@ -14,7 +14,11 @@ import {
   Search, 
   ArrowLeft, 
   Activity,
-  FileText
+  FileText,
+  Video,
+  Plus,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -42,12 +46,25 @@ interface Lead {
   created_at: string;
 }
 
+interface Reel {
+  id: number;
+  title: string;
+  platform: string;
+  video_url: string;
+  thumbnail_url: string;
+  badge: string;
+  display_order: number;
+  active: boolean;
+}
+
 export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [passcode, setPasscode] = useState(localStorage.getItem('admin_passcode') || '');
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'editor' | 'leads'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'editor' | 'leads' | 'reels'>('overview');
   const [config, setConfig] = useState<Config | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+  const [editingReel, setEditingReel] = useState<Partial<Reel> | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   
@@ -75,6 +92,7 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
         const data = await response.json();
         setLeads(data);
         fetchConfig();
+        fetchReels();
       } else {
         setLoginError('Invalid passcode. Access denied.');
         localStorage.removeItem('admin_passcode');
@@ -95,6 +113,68 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
       }
     } catch (err) {
       console.error('Error fetching config:', err);
+    }
+  };
+
+  const fetchReels = async () => {
+    try {
+      const response = await fetch('/api/reels');
+      if (response.ok) {
+        const data = await response.json();
+        setReels(data);
+      }
+    } catch (err) {
+      console.error('Error fetching reels:', err);
+    }
+  };
+
+  const handleSaveReel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReel) return;
+    
+    // basic platform detection
+    let platform = editingReel.platform || 'youtube';
+    if (editingReel.video_url?.includes('vimeo')) platform = 'vimeo';
+    else if (editingReel.video_url?.includes('youtu')) platform = 'youtube';
+
+    const payload = { ...editingReel, platform };
+    
+    try {
+      const method = payload.id ? 'PATCH' : 'POST';
+      const url = payload.id ? `/api/reels/${payload.id}` : '/api/reels';
+      
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-passcode': passcode
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        setEditingReel(null);
+        fetchReels();
+      } else {
+        alert('Failed to save reel.');
+      }
+    } catch (err) {
+      alert('Error saving reel.');
+    }
+  };
+
+  const handleDeleteReel = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this reel?')) return;
+    try {
+      const res = await fetch(`/api/reels/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-passcode': passcode }
+      });
+      if (res.ok) {
+        fetchReels();
+      }
+    } catch (err) {
+      alert('Error deleting reel.');
     }
   };
 
@@ -320,6 +400,7 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
             { id: 'overview', label: 'Overview', icon: Activity },
             { id: 'editor', label: 'Page Content Editor', icon: Settings },
             { id: 'leads', label: 'Leads & Submissions', icon: Users },
+            { id: 'reels', label: 'Reels Manager', icon: Video },
           ].map(tab => {
             const Icon = tab.icon;
             return (
@@ -703,6 +784,127 @@ export const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                   </table>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'reels' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-8"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
+                <div>
+                  <h1 className="text-3xl font-display font-bold uppercase tracking-wider">AI Reels Showcase Manager</h1>
+                  <p className="text-white/40 text-xs sm:text-sm">Manage the vertical video reels displayed on the homepage.</p>
+                </div>
+                {!editingReel && (
+                  <button 
+                    onClick={() => setEditingReel({ title: '', video_url: '', badge: '', display_order: reels.length + 1, active: true })}
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-copper hover:bg-brand-copper/80 text-white rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add New Reel
+                  </button>
+                )}
+              </div>
+
+              {editingReel ? (
+                <div className="glass-card p-6 sm:p-8 rounded-[2rem] border-white/10 bg-brand-charcoal/30">
+                  <h3 className="text-lg font-bold text-white mb-6 border-b border-white/5 pb-3">
+                    {editingReel.id ? 'Edit Reel' : 'Add New Reel'}
+                  </h3>
+                  <form onSubmit={handleSaveReel} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Video URL (YouTube or Vimeo)</label>
+                        <input 
+                          type="text"
+                          required
+                          placeholder="e.g. https://www.youtube.com/shorts/..."
+                          value={editingReel.video_url || ''}
+                          onChange={(e) => setEditingReel({ ...editingReel, video_url: e.target.value })}
+                          className="bg-brand-black/50 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-brand-copper transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Title (Optional)</label>
+                        <input 
+                          type="text"
+                          value={editingReel.title || ''}
+                          onChange={(e) => setEditingReel({ ...editingReel, title: e.target.value })}
+                          className="bg-brand-black/50 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-brand-copper transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Badge Category (Optional)</label>
+                        <input 
+                          type="text"
+                          placeholder="e.g. AI Product Reel"
+                          value={editingReel.badge || ''}
+                          onChange={(e) => setEditingReel({ ...editingReel, badge: e.target.value })}
+                          className="bg-brand-black/50 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-brand-copper transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Display Order</label>
+                        <input 
+                          type="number"
+                          value={editingReel.display_order || 1}
+                          onChange={(e) => setEditingReel({ ...editingReel, display_order: parseInt(e.target.value) })}
+                          className="bg-brand-black/50 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-brand-copper transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <input 
+                        type="checkbox"
+                        checked={editingReel.active ?? true}
+                        onChange={(e) => setEditingReel({ ...editingReel, active: e.target.checked })}
+                        className="w-5 h-5 accent-brand-copper"
+                      />
+                      <span className="text-sm font-bold text-white/70">Reel Active (Display on homepage)</span>
+                    </div>
+                    <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                      <button type="submit" className="px-6 py-3 bg-brand-copper text-white font-bold rounded-xl hover:bg-brand-copper/90 transition-colors">
+                        Save Reel
+                      </button>
+                      <button type="button" onClick={() => setEditingReel(null)} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {reels.map(reel => (
+                    <div key={reel.id} className={`glass-card p-4 rounded-2xl border-white/10 ${reel.active ? 'bg-brand-charcoal/30' : 'bg-red-900/10 opacity-60'}`}>
+                      <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-brand-copper font-bold uppercase tracking-widest">Order: {reel.display_order}</span>
+                          <span className="text-sm font-bold text-white truncate max-w-[200px]">{reel.title || 'Untitled'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setEditingReel(reel)} className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteReel(reel.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-white/50 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-[10px] text-white/40 font-mono break-all line-clamp-2">URL: {reel.video_url}</div>
+                        <div className="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
+                          <span className="bg-white/5 px-2 py-1 rounded text-white/60">{reel.platform}</span>
+                          {reel.badge && <span className="bg-brand-copper/20 text-brand-copper px-2 py-1 rounded">{reel.badge}</span>}
+                          <span className={`px-2 py-1 rounded ${reel.active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>{reel.active ? 'Active' : 'Hidden'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {reels.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-white/30 text-sm italic">
+                      No reels found. Click "Add New Reel" to create one.
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </main>
